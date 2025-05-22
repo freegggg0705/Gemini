@@ -64,7 +64,25 @@
         }
     </script>
     <script type="module">
-        import { GoogleGenerativeAI } from "@google/generative-ai";
+        // Log initial load
+        console.log("Chatbot script loaded at", new Date().toISOString());
+
+        // Check for import map support
+        if (!HTMLScriptElement.supports || !HTMLScriptElement.supports('importmap')) {
+            console.error("Browser does not support import maps.");
+            showError("Your browser does not support import maps. Please use a modern browser like Chrome, Firefox, or Edge.");
+        }
+
+        // Attempt to import GoogleGenerativeAI
+        let GoogleGenerativeAI;
+        try {
+            GoogleGenerativeAI = (await import("@google/generative-ai")).GoogleGenerativeAI;
+            console.log("GoogleGenerativeAI library loaded successfully.");
+        } catch (error) {
+            console.error("Failed to load GoogleGenerativeAI library:", error);
+            showError("Failed to load Google AI library. Check your network or try again later.");
+            return;
+        }
 
         let chat = null;
 
@@ -79,6 +97,7 @@
 
         // Show error message
         function showError(message) {
+            console.error("Error displayed:", message);
             errorMessage.textContent = message;
             errorMessage.style.display = "block";
             setTimeout(() => errorMessage.style.display = "none", 5000);
@@ -86,6 +105,7 @@
 
         // Append message to UI
         function appendMessage(role, text) {
+            console.log(`Appending ${role} message:`, text);
             const div = document.createElement("div");
             div.className = `message ${role}`;
             div.textContent = text;
@@ -93,25 +113,39 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
+        // Check network status
+        function checkNetwork() {
+            if (!navigator.onLine) {
+                console.error("No internet connection.");
+                showError("No internet connection. Please check your network.");
+                return false;
+            }
+            return true;
+        }
+
         // Initialize Gemini chat
         function initializeChat(apiKey) {
+            console.log("Initializing chat with API key (first 4 chars):", apiKey.slice(0, 4) + "...");
             try {
                 const genAI = new GoogleGenerativeAI(apiKey);
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
                 chat = model.startChat({ history: [] });
+                console.log("Chat initialized successfully.");
                 apiKeyModal.style.display = "none";
                 userInput.focus();
             } catch (error) {
-                apiKeyError.textContent = "Invalid API key.";
+                console.error("Failed to initialize chat:", error);
+                apiKeyError.textContent = `Invalid API key or initialization error: ${error.message}`;
                 apiKeyError.style.display = "block";
-                console.error(error);
             }
         }
 
         // Submit API key
         submitApiKey.addEventListener("click", () => {
             const apiKey = apiKeyInput.value.trim();
+            console.log("API key submitted (length):", apiKey.length);
             if (!apiKey) {
+                console.warn("No API key provided.");
                 apiKeyError.textContent = "API key is required.";
                 apiKeyError.style.display = "block";
                 return;
@@ -120,24 +154,42 @@
         });
 
         apiKeyInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") submitApiKey.click();
+            if (e.key === "Enter") {
+                console.log("Enter key pressed in API key input.");
+                submitApiKey.click();
+            }
         });
 
         // Send message
         async function sendMessage() {
+            if (!checkNetwork()) return;
+
             const message = userInput.value.trim();
-            if (!message || !chat) return;
+            if (!message) {
+                console.warn("Empty message input.");
+                return;
+            }
+            if (!chat) {
+                console.error("Chat not initialized.");
+                showError("Chat not initialized. Please enter a valid API key.");
+                return;
+            }
+
+            console.log("Sending message:", message);
             appendMessage("user", message);
             userInput.value = "";
             sendButton.disabled = true;
+
             try {
                 const result = await chat.sendMessage(message);
+                console.log("API response received:", result);
                 const response = await result.response;
                 const text = response.text();
+                console.log("Parsed response text:", text);
                 appendMessage("ai", text);
             } catch (error) {
-                showError("Error: Failed to get response. Check your API key or network.");
-                console.error(error);
+                console.error("Failed to send message:", error);
+                showError(`Error: Failed to get response. Details: ${error.message}`);
             } finally {
                 sendButton.disabled = false;
                 userInput.focus();
@@ -145,12 +197,20 @@
         }
 
         // Event listeners
-        sendButton.addEventListener("click", sendMessage);
+        sendButton.addEventListener("click", () => {
+            console.log("Send button clicked.");
+            sendMessage();
+        });
+
         userInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") sendMessage();
+            if (e.key === "Enter") {
+                console.log("Enter key pressed in user input.");
+                sendMessage();
+            }
         });
 
         // Focus API key input
+        console.log("Focusing API key input.");
         apiKeyInput.focus();
     </script>
 </body>
