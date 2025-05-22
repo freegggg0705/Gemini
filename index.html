@@ -1,217 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Gemini Chatbot</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .message {
-            margin: 10px;
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 80%;
-        }
-        .message.user {
-            background-color: #3b82f6;
-            color: white;
-            margin-left: auto;
-        }
-        .message.ai {
-            background-color: #e5e7eb;
-            color: black;
-            margin-right: auto;
-        }
-    </style>
+    <title>Gemini API Direct Test</title>
 </head>
-<body class="flex flex-col h-screen bg-gray-100">
-    <!-- API Key Modal -->
-    <div id="apiKeyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg max-w-sm w-full">
-            <h2 class="text-2xl font-bold mb-4">Enter Gemini API Key</h2>
-            <input id="apiKeyInput" type="text" placeholder="Your API Key" class="w-full p-2 mb-4 border rounded">
-            <p class="text-sm text-gray-600 mb-4">Get your API key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-500">Google AI Studio</a>.</p>
-            <button id="submitApiKey" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full">Submit</button>
-            <p id="apiKeyError" class="text-red-500 mt-2 hidden"></p>
-        </div>
-    </div>
-
-    <!-- Chat Interface -->
-    <div class="flex justify-between items-center p-4 bg-white border-b">
-        <h1 class="text-xl font-bold">Gemini Chatbot</h1>
-    </div>
-    <div id="chatContainer" class="chat-container"></div>
-    <div class="p-4 bg-white border-t">
-        <div class="flex max-w-600 mx-auto">
-            <input id="userInput" type="text" placeholder="Type your message..." class="flex-1 p-2 border rounded-l" autocomplete="off">
-            <button id="sendButton" class="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600">Send</button>
-        </div>
-    </div>
-    <div id="errorMessage" class="text-red-500 text-center hidden p-2"></div>
-
-    <script type="importmap">
-        {
-            "imports": {
-                "@google/generative-ai": "https://esm.run/@google/generative-ai"
-            }
-        }
-    </script>
-    <script type="module">
-        // Log initial load
-        console.log("Chatbot script loaded at", new Date().toISOString());
-
-        // Check for import map support
-        if (!HTMLScriptElement.supports || !HTMLScriptElement.supports('importmap')) {
-            console.error("Browser does not support import maps.");
-            showError("Your browser does not support import maps. Please use a modern browser like Chrome, Firefox, or Edge.");
-        }
-
-        // Attempt to import GoogleGenerativeAI
-        let GoogleGenerativeAI;
-        try {
-            GoogleGenerativeAI = (await import("@google/generative-ai")).GoogleGenerativeAI;
-            console.log("GoogleGenerativeAI library loaded successfully.");
-        } catch (error) {
-            console.error("Failed to load GoogleGenerativeAI library:", error);
-            showError("Failed to load Google AI library. Check your network or try again later.");
-            return;
-        }
-
-        let chat = null;
-
-        const apiKeyModal = document.getElementById("apiKeyModal");
-        const apiKeyInput = document.getElementById("apiKeyInput");
-        const submitApiKey = document.getElementById("submitApiKey");
-        const apiKeyError = document.getElementById("apiKeyError");
-        const chatContainer = document.getElementById("chatContainer");
-        const userInput = document.getElementById("userInput");
-        const sendButton = document.getElementById("sendButton");
-        const errorMessage = document.getElementById("errorMessage");
-
-        // Show error message
-        function showError(message) {
-            console.error("Error displayed:", message);
-            errorMessage.textContent = message;
-            errorMessage.style.display = "block";
-            setTimeout(() => errorMessage.style.display = "none", 5000);
-        }
-
-        // Append message to UI
-        function appendMessage(role, text) {
-            console.log(`Appending ${role} message:`, text);
-            const div = document.createElement("div");
-            div.className = `message ${role}`;
-            div.textContent = text;
-            chatContainer.appendChild(div);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        // Check network status
-        function checkNetwork() {
-            if (!navigator.onLine) {
-                console.error("No internet connection.");
-                showError("No internet connection. Please check your network.");
-                return false;
-            }
-            return true;
-        }
-
-        // Initialize Gemini chat
-        function initializeChat(apiKey) {
-            console.log("Initializing chat with API key (first 4 chars):", apiKey.slice(0, 4) + "...");
-            try {
-                const genAI = new GoogleGenerativeAI(apiKey);
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-                chat = model.startChat({ history: [] });
-                console.log("Chat initialized successfully.");
-                apiKeyModal.style.display = "none";
-                userInput.focus();
-            } catch (error) {
-                console.error("Failed to initialize chat:", error);
-                apiKeyError.textContent = `Invalid API key or initialization error: ${error.message}`;
-                apiKeyError.style.display = "block";
-            }
-        }
-
-        // Submit API key
-        submitApiKey.addEventListener("click", () => {
-            const apiKey = apiKeyInput.value.trim();
-            console.log("API key submitted (length):", apiKey.length);
-            if (!apiKey) {
-                console.warn("No API key provided.");
-                apiKeyError.textContent = "API key is required.";
-                apiKeyError.style.display = "block";
-                return;
-            }
-            initializeChat(apiKey);
-        });
-
-        apiKeyInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                console.log("Enter key pressed in API key input.");
-                submitApiKey.click();
-            }
-        });
-
-        // Send message
+<body>
+    <input type="text" id="api-key-input" placeholder="Enter your API key" />
+    <input type="text" id="message-input" placeholder="Enter your message" />
+    <button onclick="sendMessage()">Send</button>
+    <pre id="response">Response will appear here...</pre>
+    <script>
         async function sendMessage() {
-            if (!checkNetwork()) return;
+            const apiKey = document.getElementById('api-key-input').value;
+            const message = document.getElementById('message-input').value;
+            const responseDiv = document.getElementById('response');
+            responseDiv.textContent = 'Loading...';
 
-            const message = userInput.value.trim();
-            if (!message) {
-                console.warn("Empty message input.");
+            if (!apiKey) {
+                responseDiv.textContent = 'Please enter an API key';
                 return;
             }
-            if (!chat) {
-                console.error("Chat not initialized.");
-                showError("Chat not initialized. Please enter a valid API key.");
-                return;
-            }
-
-            console.log("Sending message:", message);
-            appendMessage("user", message);
-            userInput.value = "";
-            sendButton.disabled = true;
 
             try {
-                const result = await chat.sendMessage(message);
-                console.log("API response received:", result);
-                const response = await result.response;
-                const text = response.text();
-                console.log("Parsed response text:", text);
-                appendMessage("ai", text);
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: message }] }]
+                    })
+                });
+                console.log('Response status:', response.status);
+                const text = await response.text();
+                console.log('Raw response:', text);
+                try {
+                    const data = JSON.parse(text);
+                    responseDiv.textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+                } catch (jsonError) {
+                    responseDiv.textContent = `JSON Parse Error: ${jsonError.message}\nRaw Response: ${text}`;
+                }
             } catch (error) {
-                console.error("Failed to send message:", error);
-                showError(`Error: Failed to get response. Details: ${error.message}`);
-            } finally {
-                sendButton.disabled = false;
-                userInput.focus();
+                console.error('Fetch error:', error);
+                responseDiv.textContent = `Client Error: ${error.message}`;
             }
         }
-
-        // Event listeners
-        sendButton.addEventListener("click", () => {
-            console.log("Send button clicked.");
-            sendMessage();
-        });
-
-        userInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                console.log("Enter key pressed in user input.");
-                sendMessage();
-            }
-        });
-
-        // Focus API key input
-        console.log("Focusing API key input.");
-        apiKeyInput.focus();
     </script>
 </body>
 </html>
